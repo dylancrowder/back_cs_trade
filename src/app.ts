@@ -27,7 +27,6 @@ import createRoutes from "./modules/skins/create/create.routes";
 
 import { initMongo } from "./db/db_connect";
 import { authMiddleware } from "./middlewares/authMiddleware";
-import { SkinService } from "./modules/skins/create/create.model";
 
 const app = express();
 
