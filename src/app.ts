@@ -40,7 +40,7 @@ initMongo().catch((err) => {
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(
   cors({
-    origin: ["https://app-gestion-kohl.vercel.app", "http://localhost:3000"],
+    origin: ["https://cs2-trade-app.vercel.app", "http://localhost:3000"],
     credentials: true,
   })
 );
