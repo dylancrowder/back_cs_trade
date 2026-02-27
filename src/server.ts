@@ -1,38 +1,29 @@
 import app from "./app";
-import dotenv from "dotenv";
 import logger from "./utilities/pino.logger";
-import { initMongo } from "./db/db_connect";
 
-dotenv.config({
-  path: `.env.${process.env.NODE_ENV}`,
+const PORT = process.env.PORT || 3000;
+
+const server = app.listen(PORT, () => {
+  logger.info(`🚀 Servidor ejecutándose en puerto ${PORT}`);
 });
 
-const PORT = process.env.APP_PORT || 3000;
-
-const startServer = async () => {
-  try {
-    await initMongo(); // ✅ Espera a que Mongo se conecte
-
-    app.listen(PORT, () => {
-      logger.info(
-        `Servidor corriendo en el puerto: ${PORT} ${process.env.NODE_ENV}`
-      );
-    });
-  } catch (error) {
-    logger.error({ error }, "Error iniciando el servidor");
-    process.exit(1);
-  }
-};
-
-// Manejo global de errores
-process.on("uncaughtException", (err) => {
-  logger.error({ err }, "Excepción no controlada");
-  process.exit(1);
+// Manejo de errores no capturados
+process.on("unhandledRejection", (reason: Error) => {
+  logger.error({
+    message: "Unhandled Rejection detectado:",
+    reason: reason.message,
+    stack: reason.stack,
+  });
+  server.close(() => process.exit(1));
 });
 
-process.on("unhandledRejection", (reason) => {
-  logger.error({ reason }, "Promesa no manejadas");
-  process.exit(1);
+process.on("uncaughtException", (error: Error) => {
+  logger.error({
+    message: "Uncaught Exception detectado:",
+    error: error.message,
+    stack: error.stack,
+  });
+  server.close(() => process.exit(1));
 });
 
-startServer();
+export default server;
