@@ -5,7 +5,7 @@ import { SkinController } from "./create.controller";
 const router = Router();
 
 // Crear un análisis
-router.post("/create", SkinController.createSkin);
+router.post("/skins", SkinController.createSkin);
 
 
 export default router;

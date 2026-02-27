@@ -24,9 +24,11 @@ import monitor from "./middlewares/monitor.middeware";
 
 // Routes
 import createRoutes from "./modules/skins/create/create.routes";
+import searchRoutes from "./modules/skins/search/search.routes";
+
 
 import { initMongo } from "./db/db_connect";
-import { authMiddleware } from "./middlewares/authMiddleware";
+
 
 const app = express();
 
@@ -59,7 +61,7 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api", createRoutes);
-
+app.use("/api", searchRoutes);
 // documentacion
 app.use("/documentacion", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
