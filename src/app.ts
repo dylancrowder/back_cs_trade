@@ -53,9 +53,7 @@ app.use(cookieParser());
 app.use(monitor);
 
 // Rutas
-app.get("/protected", authMiddleware, (req, res) => {
-  res.json({ message: "Ruta protegida accesible!", user: req.user });
-});
+
 app.get("/", (req, res) => {
   res.json({ message: "hola!!" });
 });
