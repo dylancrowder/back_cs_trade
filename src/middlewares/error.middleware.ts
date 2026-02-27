@@ -1,8 +1,9 @@
+import { Request, Response, NextFunction } from "express"; // Importa NextFunction
 import AppError from "../utilities/error/appError";
 import logger from "../utilities/pino.logger";
-import { Request, Response } from "express";
 
-function errorHandler(err: Error, req: Request, res: Response): void {
+// Fíjate en los 4 argumentos: err, req, res, next
+function errorHandler(err: Error, req: Request, res: Response, next: NextFunction): void {
   if (err instanceof AppError) {
     if (err.isOperational) {
       logger.warn({
@@ -18,8 +19,7 @@ function errorHandler(err: Error, req: Request, res: Response): void {
         status: "error",
         name: err.name,
         message: err.responseMessage,
-        suggestion:
-          "Revise la entrada o contacte a soporte si el problema persiste.",
+        suggestion: "Revise la entrada o contacte a soporte si el problema persiste.",
       });
     } else {
       logger.error({
@@ -47,6 +47,7 @@ function errorHandler(err: Error, req: Request, res: Response): void {
       message: "Error interno del servidor",
     });
   }
+  // Importante: No llamar a next() aquí si ya enviaste una respuesta (res.status...)
 }
 
 export default errorHandler;
