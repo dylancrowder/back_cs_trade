@@ -3,49 +3,50 @@ import mongoose from "mongoose";
 import logger from "../utilities/pino.logger";
 import dotenv from "dotenv";
 
-// Cargar dotenv solo en desarrollo/local
 if (process.env.NODE_ENV !== "production") {
   dotenv.config();
 }
 
 const MONGO_URI = process.env.DB_URI;
 
-if (!MONGO_URI) {
-  logger.error("❌ DB_URI is not defined in environment variables.");
-  process.exit(1);
-}
-
-// Cache para serverless
+// Cache global para reutilizar la conexión en Vercel (evita el buffering timeout)
 const cached: {
   conn: mongoose.Mongoose | null;
   promise: Promise<mongoose.Mongoose> | null;
 } = (global as any).mongoose || { conn: null, promise: null };
 
-(global as any).mongoose = cached;
+if (!(global as any).mongoose) {
+  (global as any).mongoose = cached;
+}
 
 export const initMongo = async () => {
+  if (!MONGO_URI) {
+    logger.error("❌ DB_URI no definida en variables de entorno.");
+    throw new Error("DB_URI is missing");
+  }
+
   if (cached.conn) return cached.conn;
 
   if (!cached.promise) {
-    cached.promise = mongoose
-      .connect(MONGO_URI as string, {
-        serverSelectionTimeoutMS: 20000,
-        socketTimeoutMS: 45000,
-        maxPoolSize: 10,
-        bufferCommands: true,
-      })
-      .then((mongoose) => {
-        logger.info("✅ Base de datos conectada correctamente");
-        return mongoose;
-      });
+    const opts = {
+      bufferCommands: false, // ¡CRÍTICO! Si no hay conexión, falla rápido en vez de esperar
+      serverSelectionTimeoutMS: 10000, 
+      socketTimeoutMS: 45000,
+      family: 4, // Fuerza IPv4 para evitar lentitud en algunas redes
+    };
+
+    cached.promise = mongoose.connect(MONGO_URI, opts).then((m) => {
+      logger.info("✅ MongoDB Conectado");
+      return m;
+    });
   }
 
-  cached.conn = await cached.promise;
-
-  mongoose.connection.on("disconnected", () => {
-    logger.warn("⚠️ MongoDB disconnected. Reintentando conexión...");
-    cached.conn = null;
-  });
+  try {
+    cached.conn = await cached.promise;
+  } catch (e) {
+    cached.promise = null; // Resetear para reintentar en la próxima petición
+    throw e;
+  }
 
   return cached.conn;
 };
